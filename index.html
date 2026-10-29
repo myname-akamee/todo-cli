@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мой Todo Лист</title>
+  <style>
+    :root {
+      --bg: #F3F4F6;
+      --card-bg: #FFFFFF;
+      --card-done: #F9FAFB;
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --text: #111827;
+      --text-muted: #6B7280;
+      --text-done: #9CA3AF;
+      --border: #E5E7EB;
+      --danger: #EF4444;
+      --danger-hover: #DC2626;
+      --success: #10B981;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --radius: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0F172A;
+        --card-bg: #1E293B;
+        --card-done: #1A2234;
+        --primary: #6366F1;
+        --primary-hover: #4F46E5;
+        --text: #F8FAFC;
+        --text-muted: #94A3B8;
+        --text-done: #64748B;
+        --border: #334155;
+        --shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .stats {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: -6px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--success));
+      transition: width 0.3s ease;
+    }
+
+    /* Input Form */
+    .input-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      padding: 6px 8px 6px 16px;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+
+    .input-card:focus-within {
+      border-color: var(--primary);
+    }
+
+    .input-card input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      background: transparent;
+      color: var(--text);
+    }
+
+    .input-card input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn-add {
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      outline: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-add:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-add:active {
+      transform: scale(0.97);
+    }
+
+    /* Filters */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--primary);
+      color: var(--text);
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #FFFFFF;
+    }
+
+    /* Task List */
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .task-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      gap: 12px;
+      transition: transform 0.15s ease, background 0.2s;
+    }
+
+    .task-item.done {
+      background: var(--card-done);
+      border-color: var(--border);
+    }
+
+    .checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .checkbox:hover {
+      border-color: var(--primary);
+    }
+
+    .task-item.done .checkbox {
+      background: var(--success);
+      border-color: var(--success);
+      color: #FFFFFF;
+    }
+
+    .checkbox::after {
+      content: "✔";
+      font-size: 13px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .task-item.done .checkbox::after {
+      display: block;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 15px;
+      line-height: 1.4;
+      cursor: pointer;
+      word-break: break-word;
+      transition: color 0.2s;
+    }
+
+    .task-item.done .task-text {
+      text-decoration: line-through;
+      color: var(--text-done);
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      opacity: 0.6;
+      transition: all 0.2s;
+    }
+
+    .btn-delete:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+      opacity: 1;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Footer actions */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      font-size: 13px;
+    }
+
+    .footer-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .footer-btn:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    .footer-btn.danger:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .json-sync-box {
+      margin-top: 10px;
+      padding: 12px;
+      background: var(--card-bg);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .btn-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+    }
+    .btn-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Мой Todo Лист</h1>
+      <span class="stats" id="stats">0 / 0</span>
+    </header>
+
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Добавление задачи -->
+    <form class="input-card" id="taskForm">
+      <input type="text" id="taskInput" placeholder="Что нужно сделать?" autocomplete="off" autofocus />
+      <button type="submit" class="btn-add">+ Добавить</button>
+    </form>
+
+    <!-- Фильтры -->
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">Все (<span id="countAll">0</span>)</button>
+      <button class="filter-btn" data-filter="active">В работе (<span id="countActive">0</span>)</button>
+      <button class="filter-btn" data-filter="completed">Готово (<span id="countDone">0</span>)</button>
+    </div>
+
+    <!-- Список задач -->
+    <div class="task-list" id="taskList"></div>
+
+    <!-- Футер -->
+    <footer>
+      <button class="footer-btn" id="btnClearCompleted">Очистить выполненные</button>
+      <button class="footer-btn danger" id="btnClearAll">Удалить всё</button>
+    </footer>
+
+    <!-- Синхронизация с tasks.json (для CLI) -->
+    <div class="json-sync-box">
+      <span>Совместимо с <code>todo.py</code></span>
+      <div>
+        <button class="btn-link" id="btnExportJson">📥 Скачать tasks.json</button>
+        <input type="file" id="fileInput" accept=".json" style="display:none;" />
+        <button class="btn-link" id="btnImportJson" style="margin-left: 8px;">📤 Загрузить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'todo_cli_tasks';
+
+    let tasks = [];
+    let currentFilter = 'all';
+
+    // Загрузка задач
+    function loadTasks() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          tasks = JSON.parse(saved);
+        } catch (e) {
+          tasks = [];
+        }
+      } else {
+        // Задачи по умолчанию для примера
+        tasks = [
+          { id: 1, description: "Купить молоко", done: false },
+          { id: 2, description: "Написать отчёт", done: true }
+        ];
+        saveTasks();
+      }
+    }
+
+    function saveTasks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      render();
+    }
+
+    function addTask(desc) {
+      if (!desc.trim()) return;
+      tasks.push({
+        id: tasks.length + 1,
+        description: desc.trim(),
+        done: false
+      });
+      saveTasks();
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      saveTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      // Пересчёт ID
+      tasks = tasks.map((t, idx) => ({ ...t, id: idx + 1 }));
+      saveTasks();
+    }
+
+    function clearCompleted() {
+      tasks = tasks.filter(t => !t.done);
+      tasks = tasks.map((t, idx) => ({ ...t, id: idx + 1 }));
+      saveTasks();
+    }
+
+    function clearAll() {
+      if (tasks.length === 0) return;
+      if (confirm("Вы точно хотите удалить все задачи?")) {
+        tasks = [];
+        saveTasks();
+      }
+    }
+
+    function render() {
+      const taskList = document.getElementById('taskList');
+      const stats = document.getElementById('stats');
+      const progressBar = document.getElementById('progressBar');
+      const countAll = document.getElementById('countAll');
+      const countActive = document.getElementById('countActive');
+      const countDone = document.getElementById('countDone');
+
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.done).length;
+      const active = total - completed;
+
+      countAll.textContent = total;
+      countActive.textContent = active;
+      countDone.textContent = completed;
+      stats.textContent = `Выполнено ${completed} из ${total}`;
+
+      const percent = total > 0 ? (completed / total) * 100 : 0;
+      progressBar.style.width = `${percent}%`;
+
+      // Фильтрация
+      let filtered = tasks;
+      if (currentFilter === 'active') filtered = tasks.filter(t => !t.done);
+      if (currentFilter === 'completed') filtered = tasks.filter(t => t.done);
+
+      if (filtered.length === 0) {
+        let msg = "Задач пока нет 📭";
+        if (currentFilter === 'active' && total > 0) msg = "Все задачи выполнены! 🎉";
+        if (currentFilter === 'completed') msg = "Пока нет завершённых задач";
+        taskList.innerHTML = `<div class="empty-state">${msg}</div>`;
+        return;
+      }
+
+      taskList.innerHTML = filtered.map(t => `
+        <div class="task-item ${t.done ? 'done' : ''}">
+          <div class="checkbox" onclick="toggleTask(${t.id})"></div>
+          <div class="task-text" onclick="toggleTask(${t.id})">${escapeHtml(t.description)}</div>
+          <button class="btn-delete" title="Удалить" onclick="deleteTask(${t.id})">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    // Слушатели событий
+    document.getElementById('taskForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('taskInput');
+      addTask(input.value);
+      input.value = '';
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        render();
+      });
+    });
+
+    document.getElementById('btnClearCompleted').addEventListener('click', clearCompleted);
+    document.getElementById('btnClearAll').addEventListener('click', clearAll);
+
+    // Экспорт / Импорт JSON (синхронизация с CLI)
+    document.getElementById('btnExportJson').addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "tasks.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    });
+
+    const fileInput = document.getElementById('fileInput');
+    document.getElementById('btnImportJson').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (Array.isArray(imported)) {
+            tasks = imported;
+            saveTasks();
+            alert("Задачи успешно импортированы из tasks.json!");
+          }
+        } catch (err) {
+          alert("Ошибка чтения файла JSON: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Инициализация
+    loadTasks();
+    render();
+  </script>
+</body>
+</html>

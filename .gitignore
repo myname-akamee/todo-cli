@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+tasks.json
+.vscode/
+.idea/
+.DS_Store
